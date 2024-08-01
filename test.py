@@ -1,181 +1,66 @@
 import pygame
+from tetronimoes import Tetromino, draw_tetromino, handle_input, shapes
 
-# Define Tetromino Shapes and their rotations
-i_shape = [
-    [[0, 0, 0, 0],
-     [1, 1, 1, 1],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 1, 0, 0]]
-]
+# pygame setup
+pygame.init()
+screen = pygame.display.set_mode((400, 720))
+clock = pygame.time.Clock()
+running = True
 
-square_shape = [
-    [[0, 0, 0, 0],
-     [0, 1, 1, 0],
-     [0, 1, 1, 0],
-     [0, 0, 0, 0]],
-]
+# Constants
 
-t_shape = [
-    [[0, 1, 0, 0],
-     [1, 1, 1, 0],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 0, 0],
-     [0, 1, 1, 0],
-     [0, 1, 0, 0],
-     [0, 0, 0, 0]],
+current_tetromino = Tetromino(shapes.i_shape, x=100, y=100)
 
-    [[0, 0, 0, 0],
-     [1, 1, 1, 0],
-     [0, 1, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 0, 0],
-     [1, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 0, 0, 0]]
-]
+background = pygame.image.load("assets/background.png")
 
-l_shape = [
-    [[0, 0, 0, 0],
-     [1, 1, 1, 0],
-     [0, 0, 1, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 0, 0],
-     [0, 1, 0, 0],
-     [1, 1, 0, 0],
-     [0, 0, 0, 0]],
-     
-    [[1, 0, 0, 0],
-     [1, 1, 1, 0],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 1, 0],
-     [0, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 0, 0, 0]]
-]
-
-reverse_l_shape = [
-    [[0, 0, 0, 0],
-     [1, 1, 1, 0],
-     [1, 0, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[1, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 0, 0, 0]],
-     
-    [[0, 0, 1, 0],
-     [1, 1, 1, 0],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 0, 0],
-     [0, 1, 0, 0],
-     [0, 1, 1, 0],
-     [0, 0, 0, 0]]
-]
-
-bolt_shape = [
-    [[0, 1, 0, 0],
-     [0, 1, 1, 0],
-     [0, 0, 1, 0],
-     [0, 0, 0, 0]],
-    
-    [[0, 1, 1, 0],
-     [1, 1, 0, 0],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]]
-]
-
-reverse_bolt_shape = [
-    [[0, 0, 1, 0],
-     [0, 1, 1, 0],
-     [0, 1, 0, 0],
-     [0, 0, 0, 0]],
-    
-    [[1, 1, 0, 0],
-     [0, 1, 1, 0],
-     [0, 0, 0, 0],
-     [0, 0, 0, 0]]
-]
-# Tetromino class to handle shapes, positions, and rotations
-class Tetromino:
-    def __init__(self, shape, x=0, y=0):
-        self.shape = shape
-        self.x = x
-        self.y = y
-        self.rotation = 0
-    
-    def rotate(self):
-        self.rotation = (self.rotation + 1) % len(self.shape)
-    
-    def get_current_shape(self):
-        return self.shape[self.rotation]
-
-# Function to draw the Tetromino
-def draw_tetromino(surface, tetromino, block_size):
-    shape = tetromino.get_current_shape()
-    for y, row in enumerate(shape):
-        for x, cell in enumerate(row):
-            if cell:
-                pygame.draw.rect(
-                    surface,
-                    (255, 255, 255),  # White color
-                    pygame.Rect(
-                        (tetromino.x + x) * block_size,
-                        (tetromino.y + y) * block_size,
-                        block_size,
-                        block_size
-                    )
-                )
-
-# Function to handle user input for moving and rotating the Tetromino
 def handle_input(tetromino):
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
-        tetromino.x -= 1
+        if can_move(tetromino, dx=-20):
+            tetromino.x -= 20
     if keys[pygame.K_RIGHT]:
-        tetromino.x += 1
+        if can_move(tetromino, dx=20):
+            tetromino.x += 20
     if keys[pygame.K_DOWN]:
-        tetromino.y += 1
+        if can_move(tetromino, dy=20):
+            tetromino.y += 20
     if keys[pygame.K_UP]:
         tetromino.rotate()
 
-# Main game loop
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((300, 600))
-    clock = pygame.time.Clock()
-    block_size = 30
+def can_move(tetromino, dx=0, dy=0):
+    for y, row in enumerate(tetromino.get_current_shape()):
+        for x, cell in enumerate(row):
+            if cell:
+                new_x = tetromino.x + x * 20 + dx
+                new_y = tetromino.y + y * 20 + dy
+                if new_x < 100 or new_x >= 100 + 200:
+                    return False
+                if new_y >= 100 + 520:
+                    return False
+    return True
 
-    tetromino = Tetromino(reverse_bolt_shape, x=3, y=0)
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+    handle_input(current_tetromino)
 
-        handle_input(tetromino)
+    screen.blit(background, (0, 0))
 
-        screen.fill((0, 0, 0))  # Clear the screen
-        draw_tetromino(screen, tetromino, block_size)
-        
-        pygame.display.flip()
-        clock.tick(10)
+    pygame.draw.rect(screen, "blue", (100 - 10, 100 - 10, 200 + 21, 520 + 20))
 
-    pygame.quit()
+    pygame.draw.rect(screen, "black", (100, 100, 200, 520))
 
-if __name__ == "__main__":
-    main()
+    for x in range(100, 100 + 200, 20):
+        pygame.draw.line(screen, "white", (x, 100), (x, 100 + 520))
+    for y in range(100, 100 + 520, 20):
+        pygame.draw.line(screen, "white", (100, y), (100 + 200, y))
+
+    draw_tetromino(screen, current_tetromino, 20)  # Draw current Tetromino
+
+    pygame.display.flip()
+
+    clock.tick(10)  # limits FPS to 10
+
+pygame.quit()
