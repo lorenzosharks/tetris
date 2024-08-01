@@ -17,16 +17,19 @@ while running:
 
     screen.blit(background, (0,0))
 
-    pygame.draw.rect(screen, "blue", (80, 80, 240, 560))
+    pygame.draw.rect(screen, "blue", (90, 90, 221, 540))
 
     pygame.draw.rect(screen, "black", (100, 100, 200, 520))
 
-    for x in range(99, 301, 20):
+    for x in range(100, 300, 20):
         pygame.draw.line(screen, "white", (x,100), (x,619))
-    for y in range(99, 620, 20):
+    for y in range(100, 620, 20):
         pygame.draw.line(screen, "white", (100,y), (299,y))
 
-    # RENDER YOUR GAME HERE
+    pygame.draw.line(screen, "white", (299,100), (299,619))
+    pygame.draw.line(screen, "white", (100,619), (299,619))
+
+
 
     # flip() the display to put your work on screen
     pygame.display.flip()
