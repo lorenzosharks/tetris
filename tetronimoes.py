@@ -4,9 +4,9 @@ import pygame
 TETROMINOES = {
     'T': [(0, 0), (-20, 0), (20, 0), (0, -20)],
     'O': [(0, 0), (0, -20), (20, 0), (20, -20)],
-    'J': [(0, 0), (-20, 0), (0, -20), (0, -2*20)],
-    'L': [(0, 0), (20, 0), (0, -20), (0, -2*20)],
-    'I': [(0, 0), (0, 20), (0, -20), (0, -2*20)],
+    'J': [(0, 0), (-20, 0), (0, -20), (0, -40)],
+    'L': [(0, 0), (20, 0), (0, -20), (0, -40)],
+    'I': [(0, 0), (0, 20), (0, -20), (0, -40)],
     'S': [(0, 0), (-20, 0), (0, -20), (20, -20)],
     'Z': [(0, 0), (20, 0), (0, -20), (-20, -20)]
 }
@@ -27,22 +27,42 @@ class Tetromino:
             self.shape = [(dy, -dx) for dx, dy in self.shape]
             self.rotation = (self.rotation + 1) % 4
 
+    def get_leftmost_coordinate(self):
+        blocks = self.get_blocks()
+        min_x = min(block[0] for block in blocks)
+        return min_x
+
+    def get_rightmost_coordinate(self):
+        blocks = self.get_blocks()
+        max_x = max(block[0] for block in blocks) + 20
+        return max_x
+    
+    def adjust_position_after_rotation(self, left_bound, right_bound):
+        leftmost = self.get_leftmost_coordinate()
+        rightmost = self.get_rightmost_coordinate()
+
+        if leftmost < left_bound:
+            self.x += (left_bound - leftmost)
+        elif rightmost > right_bound:
+            self.x -= (rightmost - right_bound)
+
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT] and self.get_leftmost_coordinate() > 100:
+            self.x -= 20
+
+        if keys[pygame.K_RIGHT] and self.get_rightmost_coordinate() < 300:
+            self.x += 20
+
+        if keys[pygame.K_DOWN]:
+            self.y += 20
+
+        pause = False
+
+
     def print_blocks(self):
-        print("Tetromino blocks at rotation {}: {}".format(self.rotation, self.get_blocks()))
-        print(type(self.get_blocks()))
         blocks = self.get_blocks()
         print(blocks[1])
-
-# Function to handle user input for moving and rotating the Tetromino
-def handle_input(tetromino):
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_LEFT]:
-        tetromino.x -= 20
-    if keys[pygame.K_RIGHT]:
-        tetromino.x += 20
-    if keys[pygame.K_DOWN]:
-        tetromino.y += 20
-    if keys[pygame.K_UP]:
-        tetromino.rotate()
-        tetromino.print_blocks()
+        print(self.get_leftmost_coordinate())
+        print(self.get_rightmost_coordinate())

@@ -1,22 +1,33 @@
 import pygame
-from tetronimoes import handle_input, Tetromino
+from tetronimoes import Tetromino
 
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((400, 720))
 clock = pygame.time.Clock()
 running = True
+pygame.display.set_caption('Tetris')
 
-tetromino = Tetromino('I', 20, 20)  # Create a T-shaped tetromino at position (5, 5)
+
+tetromino = Tetromino('I', 120, 140)  # Create a T-shaped tetromino at position (5, 5)
 
 background = pygame.image.load("assets/background.png")
 
 while running:
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+        if event.type == pygame.KEYDOWN:
+            
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_UP]:
+                tetromino.rotate()
+                tetromino.adjust_position_after_rotation(left_bound=100, right_bound=300)
+                tetromino.print_blocks()
 
-    handle_input(tetromino)
+    tetromino.handle_input()
 
     screen.blit(background, (0,0))
 
