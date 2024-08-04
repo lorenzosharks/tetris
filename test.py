@@ -1,16 +1,13 @@
-import pygame as pg
-
-vec = pg.math.Vector2
-
-# Define Tetromino shapes using relative coordinates
+import pygame
+# Define Tetromino shapes using relative coordinates, converted to pixels
 TETROMINOES = {
-    'T': [(0, 0), (-1, 0), (1, 0), (0, -1)],
-    'O': [(0, 0), (0, -1), (1, 0), (1, -1)],
-    'J': [(0, 0), (-1, 0), (0, -1), (0, -2)],
-    'L': [(0, 0), (1, 0), (0, -1), (0, -2)],
-    'I': [(0, 0), (0, 1), (0, -1), (0, -2)],
-    'S': [(0, 0), (-1, 0), (0, -1), (1, -1)],
-    'Z': [(0, 0), (1, 0), (0, -1), (-1, -1)]
+    'T': [(0, 0), (-20, 0), (20, 0), (0, -20)],
+    'O': [(0, 0), (0, -20), (20, 0), (20, -20)],
+    'J': [(0, 0), (-20, 0), (0, -20), (0, -40)],
+    'L': [(0, 0), (20, 0), (0, -20), (0, -40)],
+    'I': [(0, 0), (0, 20), (0, -20), (0, -40)],
+    'S': [(0, 0), (-20, 0), (0, -20), (20, -20)],
+    'Z': [(0, 0), (20, 0), (0, -20), (-20, -20)]
 }
 
 # Class for handling Tetromino blocks
@@ -29,41 +26,89 @@ class Tetromino:
             self.shape = [(dy, -dx) for dx, dy in self.shape]
             self.rotation = (self.rotation + 1) % 4
 
-def handle_input(self):
-    keys = pg.key.get_pressed()
-    if keys[pg.K_LEFT]:
-        self.x -= 1
+    def get_leftmost_coordinate(self):
+        blocks = self.get_blocks()
+        min_x = min(block[0] for block in blocks)
+        return min_x
 
-    if keys[pg.K_RIGHT]:
-        self.x += 1
+    def get_rightmost_coordinate(self):
+        blocks = self.get_blocks()
+        max_x = max(block[0] for block in blocks) + 20
+        return max_x
+    
+    def adjust_position_after_rotation(self, left_bound, right_bound):
+        leftmost = self.get_leftmost_coordinate()
+        rightmost = self.get_rightmost_coordinate()
 
-    if keys[pg.K_DOWN]:
-        self.y += 1
+        if leftmost < left_bound:
+            self.x += (left_bound - leftmost)
+        elif rightmost > right_bound:
+            self.x -= (rightmost - right_bound)
 
-    if keys[pg.K_UP]:
-        self.rotate()
+    def handle_input(self):
+        keys = pygame.key.get_pressed()
 
-# Initialize Pygame
-pg.init()
-screen = pg.display.set_mode((500, 500))
-clock = pg.time.Clock()
+        if keys[pygame.K_LEFT] and self.get_leftmost_coordinate() > 100:
+            self.x -= 20
 
-# Example usage of the Tetromino class
-tetromino = Tetromino('I', 5, 5)  # Create a T-shaped tetromino at position (5, 5)
+        if keys[pygame.K_RIGHT] and self.get_rightmost_coordinate() < 300:
+            self.x += 20
 
+        pause = False
+
+    def print_blocks(self):
+        blocks = self.get_blocks()
+        print(blocks[1])
+        print(self.get_leftmost_coordinate())
+        print(self.get_rightmost_coordinate())
+
+
+# pygame setup
+pygame.init()
+screen = pygame.display.set_mode((400, 720))
+clock = pygame.time.Clock()
 running = True
+pygame.display.set_caption('Tetris')
+
+tetromino = Tetromino('I', 120, 140)  # Create a T-shaped tetromino at position (5, 5)
+
+background = pygame.image.load("assets/background.png")
+
 while running:
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
             running = False
+        
+        if event.type == pygame.KEYDOWN:
+            
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_UP]:
+                tetromino.rotate()
+                tetromino.adjust_position_after_rotation(left_bound=100, right_bound=300)
+                tetromino.print_blocks()
 
-    screen.fill((0, 0, 0))  # Clear screen with black
+    tetromino.handle_input()
+    tetromino.fall()
+    screen.blit(background, (0,0))
+
+    pygame.draw.rect(screen, "blue", (90, 90, 221, 420))
+
+    pygame.draw.rect(screen, "black", (100, 100, 200, 400))
+
+    for x in range(100, 300, 20):
+        pygame.draw.line(screen, "white", (x,100), (x,499))
+    for y in range(100, 500, 20):
+        pygame.draw.line(screen, "white", (100,y), (299,y))
+
+    pygame.draw.line(screen, "white", (299,100), (299,499))
+    pygame.draw.line(screen, "white", (100,499), (299,499))
+
     for x, y in tetromino.get_blocks():
-        pg.draw.rect(screen, (255, 255, 255), (x * 20, y * 20, 20, 20))  # Draw each block as a white square
+        pygame.draw.rect(screen, (255, 255, 255), (x, y, 20, 20))
 
-    handle_input(tetromino)
+    pygame.display.flip()
 
-    pg.display.flip()
-    clock.tick(10)
+    clock.tick(10)  # limits FPS to 60
 
-pg.quit()
+pygame.quit()

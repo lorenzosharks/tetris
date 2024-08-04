@@ -8,10 +8,11 @@ clock = pygame.time.Clock()
 running = True
 pygame.display.set_caption('Tetris')
 
-
 tetromino = Tetromino('I', 120, 140)  # Create a T-shaped tetromino at position (5, 5)
 
 background = pygame.image.load("assets/background.png")
+
+fall =True
 
 while running:
     
@@ -28,6 +29,18 @@ while running:
                 tetromino.print_blocks()
 
     tetromino.handle_input()
+
+    if fall == True:
+        tetromino.y += 20
+        fall = False
+        start = pygame.time.get_ticks()
+
+    if fall == False:
+        second_start = pygame.time.get_ticks()
+        elapsed = second_start - start
+
+        if elapsed > 500:
+            fall = True
 
     screen.blit(background, (0,0))
 

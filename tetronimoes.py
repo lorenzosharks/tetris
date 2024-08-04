@@ -60,7 +60,6 @@ class Tetromino:
 
         pause = False
 
-
     def print_blocks(self):
         blocks = self.get_blocks()
         print(blocks[1])
