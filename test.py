@@ -1,67 +1,5 @@
 import pygame
-# Define Tetromino shapes using relative coordinates, converted to pixels
-TETROMINOES = {
-    'T': [(0, 0), (-20, 0), (20, 0), (0, -20)],
-    'O': [(0, 0), (0, -20), (20, 0), (20, -20)],
-    'J': [(0, 0), (-20, 0), (0, -20), (0, -40)],
-    'L': [(0, 0), (20, 0), (0, -20), (0, -40)],
-    'I': [(0, 0), (0, 20), (0, -20), (0, -40)],
-    'S': [(0, 0), (-20, 0), (0, -20), (20, -20)],
-    'Z': [(0, 0), (20, 0), (0, -20), (-20, -20)]
-}
-
-# Class for handling Tetromino blocks
-class Tetromino:
-    def __init__(self, shape, x, y):
-        self.shape = TETROMINOES[shape]
-        self.x = x
-        self.y = y
-        self.rotation = 0
-
-    def get_blocks(self):
-        return [(self.x + dx, self.y + dy) for dx, dy in self.shape]
-
-    def rotate(self):
-        if self.shape != TETROMINOES['O']:  # 'O' shape doesn't need rotation
-            self.shape = [(dy, -dx) for dx, dy in self.shape]
-            self.rotation = (self.rotation + 1) % 4
-
-    def get_leftmost_coordinate(self):
-        blocks = self.get_blocks()
-        min_x = min(block[0] for block in blocks)
-        return min_x
-
-    def get_rightmost_coordinate(self):
-        blocks = self.get_blocks()
-        max_x = max(block[0] for block in blocks) + 20
-        return max_x
-    
-    def adjust_position_after_rotation(self, left_bound, right_bound):
-        leftmost = self.get_leftmost_coordinate()
-        rightmost = self.get_rightmost_coordinate()
-
-        if leftmost < left_bound:
-            self.x += (left_bound - leftmost)
-        elif rightmost > right_bound:
-            self.x -= (rightmost - right_bound)
-
-    def handle_input(self):
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_LEFT] and self.get_leftmost_coordinate() > 100:
-            self.x -= 20
-
-        if keys[pygame.K_RIGHT] and self.get_rightmost_coordinate() < 300:
-            self.x += 20
-
-        pause = False
-
-    def print_blocks(self):
-        blocks = self.get_blocks()
-        print(blocks[1])
-        print(self.get_leftmost_coordinate())
-        print(self.get_rightmost_coordinate())
-
+from tetronimoes import Tetromino, create_new_tetromino, check_collision, merge_tetromino
 
 # pygame setup
 pygame.init()
@@ -70,45 +8,63 @@ clock = pygame.time.Clock()
 running = True
 pygame.display.set_caption('Tetris')
 
-tetromino = Tetromino('I', 120, 140)  # Create a T-shaped tetromino at position (5, 5)
-
+fixed_blocks = set()
+tetromino = create_new_tetromino()
 background = pygame.image.load("assets/background.png")
 
+fall = True
+start = pygame.time.get_ticks()
+
 while running:
-    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        
+
         if event.type == pygame.KEYDOWN:
-            
             keys = pygame.key.get_pressed()
             if keys[pygame.K_UP]:
                 tetromino.rotate()
-                tetromino.adjust_position_after_rotation(left_bound=100, right_bound=300)
-                tetromino.print_blocks()
 
-    tetromino.handle_input()
-    tetromino.fall()
-    screen.blit(background, (0,0))
+    tetromino.handle_input(fixed_blocks)
+
+    if fall:
+        if not tetromino.can_move_down(fixed_blocks):
+            merge_tetromino(tetromino, fixed_blocks)
+            tetromino = create_new_tetromino()
+            while check_collision(tetromino, fixed_blocks):
+                tetromino.y -= 20  # Adjust position if the new Tetromino collides immediately
+        else:
+            tetromino.y += 20
+
+        fall = False
+        start = pygame.time.get_ticks()
+
+    if not fall:
+        second_start = pygame.time.get_ticks()
+        elapsed = second_start - start
+        if elapsed > 500:
+            fall = True
+
+    screen.blit(background, (0, 0))
 
     pygame.draw.rect(screen, "blue", (90, 90, 221, 420))
-
     pygame.draw.rect(screen, "black", (100, 100, 200, 400))
 
     for x in range(100, 300, 20):
-        pygame.draw.line(screen, "white", (x,100), (x,499))
+        pygame.draw.line(screen, "white", (x, 100), (x, 499))
     for y in range(100, 500, 20):
-        pygame.draw.line(screen, "white", (100,y), (299,y))
+        pygame.draw.line(screen, "white", (100, y), (299, y))
 
-    pygame.draw.line(screen, "white", (299,100), (299,499))
-    pygame.draw.line(screen, "white", (100,499), (299,499))
+    pygame.draw.line(screen, "white", (299, 100), (299, 499))
+    pygame.draw.line(screen, "white", (100, 499), (299, 499))
+
+    for x, y in fixed_blocks:
+        pygame.draw.rect(screen, (255, 255, 255), (x, y, 20, 20))
 
     for x, y in tetromino.get_blocks():
         pygame.draw.rect(screen, (255, 255, 255), (x, y, 20, 20))
 
     pygame.display.flip()
-
     clock.tick(10)  # limits FPS to 60
 
 pygame.quit()
